@@ -1,31 +1,33 @@
-use chrono::{DateTime, Local, TimeZone};
+use chrono::TimeDelta;
 
-struct WorkJourney {
-    starting_time: DateTime<Local>,
-    ending_time: DateTime<Local>,
+enum HourState {
+    Debt,
+    Credit,
 }
 
-impl WorkJourney {
-    fn new(starting_time: DateTime<Local>, ending_time: DateTime<Local>) -> WorkJourney {
-        WorkJourney {
-            starting_time,
-            ending_time,
+pub struct DeltaHours {
+    original_delta: TimeDelta,
+    unsigned_delta: TimeDelta,
+    state: HourState,
+}
+
+impl DeltaHours {
+    fn new(original_delta: TimeDelta) -> DeltaHours {
+        let mut state = HourState::Credit;
+        if original_delta >= TimeDelta::zero() {
+            state = HourState::Debt;
         }
-    }
-}
 
-pub struct WorkDay {
-    journeys: Vec<WorkJourney>,
-}
+        let unsigned_delta = if original_delta > TimeDelta::zero() {
+            original_delta
+        } else {
+            -original_delta
+        };
 
-pub struct WorkWeek {
-    workdays: Vec<Option<WorkDay>>,
-}
-
-impl WorkWeek {
-    fn new() -> WorkWeek {
-        let workdays: Vec<Option<WorkDay>> = Vec::with_capacity(5);
-
-        WorkWeek { workdays }
+        DeltaHours {
+            original_delta,
+            unsigned_delta,
+            state,
+        }
     }
 }
