@@ -1,6 +1,6 @@
 use chrono::TimeDelta;
 
-use crate::work_days::WorkDay;
+use crate::{time::DeltaHours, work_days::WorkDay};
 
 pub struct WorkWeek {
     workdays: Vec<Option<WorkDay>>,
@@ -55,7 +55,8 @@ impl WorkWeek {
         )
     }
 
-    pub fn worked_delta(&self) -> TimeDelta {
-        self.expected_hours() - self.worked_hours()
+    pub fn worked_delta(&self) -> DeltaHours {
+        let current_delta_time = self.expected_hours() - self.worked_hours();
+        DeltaHours::new(current_delta_time)
     }
 }

@@ -12,7 +12,7 @@ pub struct DeltaHours {
 }
 
 impl DeltaHours {
-    fn new(original_delta: TimeDelta) -> DeltaHours {
+    pub fn new(original_delta: TimeDelta) -> DeltaHours {
         let mut state = HourState::Credit;
         if original_delta >= TimeDelta::zero() {
             state = HourState::Debt;
