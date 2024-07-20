@@ -13,12 +13,12 @@ pub enum LongTermRegistryError {
     IntConversionError(TryFromIntError),
 }
 
-struct LongTermRegistry {
+pub struct LongTermRegistry {
     history: Vec<WorkWeek>,
 }
 
 impl LongTermRegistry {
-    fn new() -> LongTermRegistry {
+    pub fn new() -> LongTermRegistry {
         let history = Vec::new();
 
         LongTermRegistry { history }
@@ -48,5 +48,11 @@ impl LongTermRegistry {
         }
 
         Ok(current_delta)
+    }
+}
+
+impl Default for LongTermRegistry {
+    fn default() -> Self {
+        Self::new()
     }
 }
