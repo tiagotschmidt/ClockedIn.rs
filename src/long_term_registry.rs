@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::num::TryFromIntError;
 use thiserror::Error;
 
-use crate::{library::delta_hours::DeltaHours, library::work_week::WorkWeek};
+use crate::{delta_hours::DeltaHours, work_week::WorkWeek};
 
 #[derive(Error, Debug)]
 pub enum LongTermRegistryError {

@@ -1,7 +1,7 @@
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::library::work_journey::WorkJourney;
+use crate::work_journey::WorkJourney;
 
 const MAX_JOURNEYS_PER_DAY: usize = 5;
 
@@ -93,7 +93,7 @@ impl WorkDay {
 mod tests {
     use chrono::{TimeDelta, Utc};
 
-    use crate::library::{work_days::WorkDay, work_journey::IncompleteWorkJourney};
+    use crate::{work_days::WorkDay, work_journey::IncompleteWorkJourney};
 
     #[test]
     fn basic_work_day_initialization() {
@@ -126,7 +126,7 @@ mod tests {
 
         assert!(work_day
             .violations
-            .contains(&crate::library::work_days::IntraDayViolation::MissingHours));
+            .contains(&crate::work_days::IntraDayViolation::MissingHours));
 
         assert_eq!(TimeDelta::hours(5).num_seconds(), work_day.worked_hours());
     }
@@ -137,7 +137,7 @@ mod tests {
 
         assert!(work_day
             .violations
-            .contains(&crate::library::work_days::IntraDayViolation::ViolatedInterJourneyRest));
+            .contains(&crate::work_days::IntraDayViolation::ViolatedInterJourneyRest));
 
         assert_eq!(TimeDelta::hours(7).num_seconds(), work_day.worked_hours());
     }
@@ -148,7 +148,7 @@ mod tests {
 
         assert!(work_day
             .violations
-            .contains(&crate::library::work_days::IntraDayViolation::ExceddedMaxHours));
+            .contains(&crate::work_days::IntraDayViolation::ExceddedMaxHours));
 
         assert_eq!(TimeDelta::hours(11).num_seconds(), work_day.worked_hours());
     }

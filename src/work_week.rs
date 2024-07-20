@@ -3,7 +3,7 @@ use std::num::TryFromIntError;
 use chrono::TimeDelta;
 use serde::{Deserialize, Serialize};
 
-use crate::{library::delta_hours::DeltaHours, library::work_days::WorkDay};
+use crate::{delta_hours::DeltaHours, work_days::WorkDay};
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum InterDayViolation {

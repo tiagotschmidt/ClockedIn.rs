@@ -78,7 +78,7 @@ mod tests {
 
     use chrono::{TimeDelta, Utc};
 
-    use crate::library::work_journey::IncompleteWorkJourney;
+    use crate::work_journey::IncompleteWorkJourney;
 
     #[test]
     fn basic_work_journey_initialization() {
