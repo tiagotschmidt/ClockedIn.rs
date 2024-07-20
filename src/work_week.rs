@@ -1,16 +1,27 @@
+use std::num::TryFromIntError;
+
 use chrono::TimeDelta;
 
 use crate::{time::DeltaHours, work_days::WorkDay};
 
+pub enum InterDayViolation {
+    InterDayRestViolation,
+}
+
 pub struct WorkWeek {
     workdays: Vec<Option<WorkDay>>,
+    violations: Option<InterDayViolation>,
 }
 
 impl WorkWeek {
     pub fn new() -> WorkWeek {
         let workdays: Vec<Option<WorkDay>> = Vec::with_capacity(5);
+        let violations = None;
 
-        WorkWeek { workdays }
+        WorkWeek {
+            workdays,
+            violations,
+        }
     }
 
     pub fn append_day(&mut self, day: WorkDay) {
@@ -25,7 +36,8 @@ impl WorkWeek {
                     let this_day_first_clock_in = day.last_clock_out();
 
                     if next_day_first_clock_in - this_day_first_clock_in < TimeDelta::hours(11) {
-                        println!("Inter-day rest was violated!")
+                        println!("Inter-day rest was violated!");
+                        self.violations = Some(InterDayViolation::InterDayRestViolation);
                     }
                 }
             }
@@ -37,7 +49,7 @@ impl WorkWeek {
             .iter()
             .fold(TimeDelta::zero(), |mut acc, item| {
                 if let Some(work_day) = item {
-                    acc = acc + work_day.worked_hours()
+                    acc += work_day.worked_hours()
                 }
                 acc
             })
@@ -47,16 +59,19 @@ impl WorkWeek {
         self.workdays.iter().filter(|item| item.is_some()).count()
     }
 
-    fn expected_hours(&self) -> TimeDelta {
-        TimeDelta::hours(
-            (self.days_worked() * 8)
-                .try_into()
-                .expect("Error during number conversion!"),
-        )
+    fn expected_hours(&self) -> Result<TimeDelta, TryFromIntError> {
+        let hours = (self.days_worked() * 8).try_into()?;
+        Ok(TimeDelta::hours(hours))
     }
 
     pub fn worked_delta(&self) -> DeltaHours {
         let current_delta_time = self.expected_hours() - self.worked_hours();
         DeltaHours::new(current_delta_time)
+    }
+}
+
+impl Default for WorkWeek {
+    fn default() -> Self {
+        Self::new()
     }
 }

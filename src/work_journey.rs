@@ -1,4 +1,11 @@
 use chrono::{DateTime, Local, TimeDelta};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum WorkJourneyError {
+    #[error("Invalid clock-in and clock-out time boundaries.")]
+    InvalidaClockBoundaries(DateTime<Local>, DateTime<Local>),
+}
 
 pub struct IncompleteWorkJourney {
     starting_time: DateTime<Local>,
@@ -13,7 +20,7 @@ impl IncompleteWorkJourney {
         }
     }
 
-    pub fn end(&mut self, current_time: DateTime<Local>) -> Option<WorkJourney> {
+    pub fn end(&mut self, current_time: DateTime<Local>) -> Result<WorkJourney, WorkJourneyError> {
         self.ending_time = Some(current_time);
 
         WorkJourney::new(self.starting_time, current_time)
@@ -30,23 +37,22 @@ impl WorkJourney {
     pub fn new(
         starting_time: DateTime<Local>,
         ending_time: DateTime<Local>,
-    ) -> Option<WorkJourney> {
+    ) -> Result<WorkJourney, WorkJourneyError> {
         if WorkJourney::validate(starting_time, ending_time) {
-            Some(WorkJourney {
+            Ok(WorkJourney {
                 starting_time,
                 ending_time,
             })
         } else {
-            None
+            Err(WorkJourneyError::InvalidaClockBoundaries(
+                starting_time,
+                ending_time,
+            ))
         }
     }
 
     fn validate(starting_time: DateTime<Local>, ending_time: DateTime<Local>) -> bool {
-        if ending_time < starting_time {
-            false
-        } else {
-            true
-        }
+        ending_time >= starting_time
     }
 
     pub fn worked_hours(&self) -> TimeDelta {
@@ -78,7 +84,7 @@ mod tests {
 
         let now_2 = Local::now();
         let journey = new_journey.end(now_2);
-        assert!(journey.is_some())
+        assert!(journey.is_ok())
     }
 
     #[test]
@@ -90,7 +96,7 @@ mod tests {
         let mut new_journey = IncompleteWorkJourney::new(now_2);
 
         let journey = new_journey.end(now);
-        assert!(journey.is_none())
+        assert!(journey.is_err())
     }
 
     #[test]
