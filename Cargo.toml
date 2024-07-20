@@ -3,6 +3,14 @@ name = "clockedin_rs"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "clockedin_utils"
+path = "src/lib.rs"
+
+[[bin]]
+name = "clokedin"
+path = "src/bin.rs"
+
 [dependencies]
 chrono = { version = "0.4.38", features = ["serde"] }
 serde = { version = "1.0.204", features = ["derive"] }

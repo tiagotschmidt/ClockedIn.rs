@@ -34,7 +34,7 @@ pub enum ClockedInServiceError {
 }
 
 #[derive(Serialize, Deserialize)]
-struct ClockedInService {
+pub struct ClockedInService {
     long_term_registry: LongTermRegistry,
     current_work_journey: Option<IncompleteWorkJourney>,
     current_work_day: Vec<WorkJourney>,
@@ -161,8 +161,14 @@ impl ClockedInService {
     }
 }
 
+impl Default for ClockedInService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 fn open_long_term_registry_file() -> Result<std::fs::File, ClockedInServiceError> {
-    let mut file = OpenOptions::new()
+    let file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
