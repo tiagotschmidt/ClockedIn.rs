@@ -1,7 +1,13 @@
+use std::{
+    fs::OpenOptions,
+    io::{Read, Write},
+};
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::error;
 use thiserror::Error;
+
+const LONG_TERM_REGISTRY_STATE_FILE_NAME: &str = "long_term_registry_state.json";
 
 use super::{
     delta_hours::DeltaHours,
@@ -23,6 +29,8 @@ pub enum ClockedInServiceError {
     LongTermRegistryError(LongTermRegistryError),
     #[error("Error during serialization for general state.")]
     SerializationError,
+    #[error("Error during opening of long term state file.")]
+    LongTermRegistryOpenError,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -128,7 +136,37 @@ impl ClockedInService {
         Ok(long_time_registry_delta)
     }
 
-    pub fn serialize_to_json(&self) -> Result<String, ClockedInServiceError> {
+    fn serialize_to_json(&self) -> Result<String, ClockedInServiceError> {
         serde_json::to_string(&self).map_err(|_err| ClockedInServiceError::SerializationError)
     }
+
+    fn deserialize_from_json(serialized: String) -> Result<Self, ClockedInServiceError> {
+        serde_json::from_str(&serialized).map_err(|_err| ClockedInServiceError::SerializationError)
+    }
+
+    pub fn save_state(&self) -> Result<(), ClockedInServiceError> {
+        let mut file = open_long_term_registry_file()?;
+
+        let _ = file.write_all(self.serialize_to_json()?.as_bytes());
+        Ok(())
+    }
+
+    pub fn read_state() -> Result<ClockedInService, ClockedInServiceError> {
+        let mut file = open_long_term_registry_file()?;
+
+        let mut serialized_state = String::new();
+        let _ = file.read_to_string(&mut serialized_state);
+
+        ClockedInService::deserialize_from_json(serialized_state)
+    }
+}
+
+fn open_long_term_registry_file() -> Result<std::fs::File, ClockedInServiceError> {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(LONG_TERM_REGISTRY_STATE_FILE_NAME)
+        .map_err(|_| ClockedInServiceError::LongTermRegistryOpenError)?;
+    Ok(file)
 }
