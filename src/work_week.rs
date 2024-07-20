@@ -64,9 +64,9 @@ impl WorkWeek {
         Ok(TimeDelta::hours(hours))
     }
 
-    pub fn worked_delta(&self) -> DeltaHours {
-        let current_delta_time = self.expected_hours() - self.worked_hours();
-        DeltaHours::new(current_delta_time)
+    pub fn worked_delta(&self) -> Result<DeltaHours, TryFromIntError> {
+        let current_delta_time = self.expected_hours()? - self.worked_hours();
+        Ok(DeltaHours::new(current_delta_time))
     }
 }
 
