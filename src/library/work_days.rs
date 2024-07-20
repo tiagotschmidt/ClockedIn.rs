@@ -1,6 +1,6 @@
 use chrono::{DateTime, Local, TimeDelta};
 
-use crate::work_journey::WorkJourney;
+use crate::library::work_journey::WorkJourney;
 
 const MAX_JOURNEYS_PER_DAY: usize = 5;
 
@@ -91,7 +91,7 @@ impl WorkDay {
 mod tests {
     use chrono::{Local, TimeDelta};
 
-    use crate::{work_days::WorkDay, work_journey::IncompleteWorkJourney};
+    use crate::library::{work_days::WorkDay, work_journey::IncompleteWorkJourney};
 
     #[test]
     fn basic_work_day_initialization() {
@@ -124,7 +124,7 @@ mod tests {
 
         assert!(work_day
             .violations
-            .contains(&crate::work_days::IntraDayViolation::MissingHours));
+            .contains(&crate::library::work_days::IntraDayViolation::MissingHours));
 
         assert_eq!(TimeDelta::hours(5), work_day.worked_hours());
     }
@@ -135,7 +135,7 @@ mod tests {
 
         assert!(work_day
             .violations
-            .contains(&crate::work_days::IntraDayViolation::ViolatedInterJourneyRest));
+            .contains(&crate::library::work_days::IntraDayViolation::ViolatedInterJourneyRest));
 
         assert_eq!(TimeDelta::hours(7), work_day.worked_hours());
     }
@@ -146,7 +146,7 @@ mod tests {
 
         assert!(work_day
             .violations
-            .contains(&crate::work_days::IntraDayViolation::ExceddedMaxHours));
+            .contains(&crate::library::work_days::IntraDayViolation::ExceddedMaxHours));
 
         assert_eq!(TimeDelta::hours(11), work_day.worked_hours());
     }

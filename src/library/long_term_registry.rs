@@ -3,7 +3,7 @@ use std::num::TryFromIntError;
 use chrono::TimeDelta;
 use thiserror::Error;
 
-use crate::{delta_hours::DeltaHours, work_week::WorkWeek};
+use crate::{library::delta_hours::DeltaHours, library::work_week::WorkWeek};
 
 #[derive(Error, Debug)]
 pub enum LongTermRegistryError {

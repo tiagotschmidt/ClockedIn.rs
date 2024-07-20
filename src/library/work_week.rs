@@ -2,7 +2,7 @@ use std::num::TryFromIntError;
 
 use chrono::TimeDelta;
 
-use crate::{delta_hours::DeltaHours, work_days::WorkDay};
+use crate::{library::delta_hours::DeltaHours, library::work_days::WorkDay};
 
 pub enum InterDayViolation {
     InterDayRestViolation,
