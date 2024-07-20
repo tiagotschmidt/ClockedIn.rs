@@ -19,7 +19,7 @@ pub struct WorkDay {
 }
 
 impl WorkDay {
-    pub fn new(journeys: &Vec<WorkJourney>) -> WorkDay {
+    pub fn new(journeys: &[WorkJourney]) -> WorkDay {
         let mut day_violations = Vec::new();
 
         let worked_hours = journeys
