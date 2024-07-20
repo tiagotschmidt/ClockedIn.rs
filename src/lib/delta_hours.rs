@@ -38,11 +38,10 @@ impl DeltaHours {
 
 impl AddAssign for DeltaHours {
     fn add_assign(&mut self, rhs: Self) {
-        self.original_delta += rhs.original_delta
+        self.original_delta += rhs.original_delta;
 
-        let mut state = HourState::Credit;
         if self.original_delta >= TimeDelta::zero() {
-            state = HourState::Debt;
+            self.state = HourState::Debt;
         }
 
         let unsigned_delta = if self.original_delta > TimeDelta::zero() {
