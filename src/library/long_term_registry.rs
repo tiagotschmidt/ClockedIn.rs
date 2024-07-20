@@ -1,6 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::num::TryFromIntError;
-
-use chrono::TimeDelta;
 use thiserror::Error;
 
 use crate::{library::delta_hours::DeltaHours, library::work_week::WorkWeek};
@@ -13,8 +12,9 @@ pub enum LongTermRegistryError {
     IntConversionError(TryFromIntError),
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct LongTermRegistry {
-    history: Vec<WorkWeek>,
+    pub history: Vec<WorkWeek>,
 }
 
 impl LongTermRegistry {
@@ -24,13 +24,11 @@ impl LongTermRegistry {
         LongTermRegistry { history }
     }
 
-    pub fn worked_hours(&self) -> TimeDelta {
-        self.history
-            .iter()
-            .fold(TimeDelta::zero(), |mut acc, item| {
-                acc += item.worked_hours();
-                acc
-            })
+    pub fn worked_hours(&self) -> i64 {
+        self.history.iter().fold(0, |mut acc, item| {
+            acc += item.worked_hours();
+            acc
+        })
     }
 
     pub fn worked_delta(&self) -> Result<DeltaHours, LongTermRegistryError> {

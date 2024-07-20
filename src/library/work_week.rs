@@ -1,13 +1,16 @@
 use std::num::TryFromIntError;
 
 use chrono::TimeDelta;
+use serde::{Deserialize, Serialize};
 
 use crate::{library::delta_hours::DeltaHours, library::work_days::WorkDay};
 
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum InterDayViolation {
     InterDayRestViolation,
 }
 
+#[derive(Clone, Serialize, Deserialize)]
 pub struct WorkWeek {
     workdays: Vec<Option<WorkDay>>,
     violations: Option<InterDayViolation>,
@@ -44,24 +47,22 @@ impl WorkWeek {
         }
     }
 
-    pub fn worked_hours(&self) -> TimeDelta {
-        self.workdays
-            .iter()
-            .fold(TimeDelta::zero(), |mut acc, item| {
-                if let Some(work_day) = item {
-                    acc += work_day.worked_hours()
-                }
-                acc
-            })
+    pub fn worked_hours(&self) -> i64 {
+        self.workdays.iter().fold(0, |mut acc, item| {
+            if let Some(work_day) = item {
+                acc += work_day.worked_hours()
+            }
+            acc
+        })
     }
 
     fn days_worked(&self) -> usize {
         self.workdays.iter().filter(|item| item.is_some()).count()
     }
 
-    fn expected_hours(&self) -> Result<TimeDelta, TryFromIntError> {
+    fn expected_hours(&self) -> Result<i64, TryFromIntError> {
         let hours = (self.days_worked() * 8).try_into()?;
-        Ok(TimeDelta::hours(hours))
+        Ok(TimeDelta::hours(hours).num_seconds())
     }
 
     pub fn worked_delta(&self) -> Result<DeltaHours, TryFromIntError> {

@@ -1,7 +1,5 @@
 use std::ops::AddAssign;
 
-use chrono::TimeDelta;
-
 #[derive(Clone, Copy)]
 enum HourState {
     Debt,
@@ -10,19 +8,19 @@ enum HourState {
 
 #[derive(Clone, Copy)]
 pub struct DeltaHours {
-    original_delta: TimeDelta,
-    unsigned_delta: TimeDelta,
+    original_delta: i64,
+    unsigned_delta: i64,
     state: HourState,
 }
 
 impl DeltaHours {
-    pub fn new(original_delta: TimeDelta) -> DeltaHours {
+    pub fn new(original_delta: i64) -> DeltaHours {
         let mut state = HourState::Credit;
-        if original_delta >= TimeDelta::zero() {
+        if original_delta >= 0 {
             state = HourState::Debt;
         }
 
-        let unsigned_delta = if original_delta > TimeDelta::zero() {
+        let unsigned_delta = if original_delta > 0 {
             original_delta
         } else {
             -original_delta
@@ -40,11 +38,11 @@ impl AddAssign for DeltaHours {
     fn add_assign(&mut self, rhs: Self) {
         self.original_delta += rhs.original_delta;
 
-        if self.original_delta >= TimeDelta::zero() {
+        if self.original_delta >= 0 {
             self.state = HourState::Debt;
         }
 
-        let unsigned_delta = if self.original_delta > TimeDelta::zero() {
+        let unsigned_delta = if self.original_delta > 0 {
             self.original_delta
         } else {
             -self.original_delta
