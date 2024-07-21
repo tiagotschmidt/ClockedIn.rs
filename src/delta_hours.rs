@@ -1,5 +1,7 @@
 use std::{fmt::Display, ops::AddAssign};
 
+use colored::Colorize;
+
 #[derive(Clone, Copy)]
 enum HourState {
     Debt,
@@ -61,12 +63,24 @@ impl Display for DeltaHours {
 
         let temp = match self.state {
             HourState::Debt => &format!(
-                "Missing {} hours, {} minutes, {} seconds.",
-                current_hours, current_minutes, current_seconds
+                "{} {} {}, {} {}, {} {}",
+                "Missing".red(),
+                current_hours,
+                "hours".red(),
+                current_minutes,
+                "minutes".red(),
+                current_seconds,
+                "seconds.".red(),
             ),
             HourState::Credit if self.original_delta != 0 => &format!(
-                "Exceeding {} hours, {} minutes, {} seconds.",
-                current_hours, current_minutes, current_seconds
+                "{} {} {}, {} {}, {} {}",
+                "Exceeding".green(),
+                current_hours,
+                "hours".green(),
+                current_minutes,
+                "minutes".green(),
+                current_seconds,
+                "seconds.".green(),
             ),
             HourState::Credit => &"Delta is zero".to_string(),
         };

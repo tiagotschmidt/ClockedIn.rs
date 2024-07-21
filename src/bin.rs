@@ -68,6 +68,7 @@ fn main() {
                 Ok(_) => (),
                 Err(err) => panic_epilogue(&clockedin_service, err),
             }
+        } else if command == "view" {
         }
 
         let current_delta = match clockedin_service.worked_delta_until_today() {
@@ -77,20 +78,16 @@ fn main() {
             }
         };
 
-        println!("##############################################################");
-        println!("\tClockedIn");
+        println!("# ClockedIn #");
         println!("Current Delta (until today): {}", current_delta);
-        println!("##############################################################");
     } else {
         loop {
-            println!("##############################################################");
-            println!("\tClockedIn Terminal Version");
+            println!("# ClockedIn Terminal #");
             println!("Current Delta (until today): {}", current_delta);
             println!("0. ClockIn");
             println!("1. ClockOut");
             println!("2. ClockOut and end Day");
             println!("3. ClockOut and end Week");
-            println!("##############################################################");
             let mut buffer = String::new();
             io::stdin().read_line(&mut buffer).unwrap();
 
