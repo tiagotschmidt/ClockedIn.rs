@@ -8,7 +8,7 @@ name = "clockedin_utils"
 path = "src/lib.rs"
 
 [[bin]]
-name = "clokedin"
+name = "clockedin"
 path = "src/bin.rs"
 
 [dependencies]
