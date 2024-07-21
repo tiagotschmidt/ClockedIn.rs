@@ -70,6 +70,13 @@ fn main() {
             }
         }
 
+        let current_delta = match clockedin_service.worked_delta_until_today() {
+            Ok(delta) => delta,
+            Err(err) => {
+                panic!("Error occurred: {}", err);
+            }
+        };
+
         println!("##############################################################");
         println!("\tClockedIn");
         println!("Current Delta (until today): {}", current_delta);

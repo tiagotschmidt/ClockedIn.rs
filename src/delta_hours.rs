@@ -68,7 +68,7 @@ impl Display for DeltaHours {
                 "Exceeding {} hours, {} minutes, {} seconds.",
                 current_hours, current_minutes, current_seconds
             ),
-            HourState::Credit => &"Empty registry.".to_string(),
+            HourState::Credit => &"Delta is zero".to_string(),
         };
 
         write!(f, "{}", temp)
