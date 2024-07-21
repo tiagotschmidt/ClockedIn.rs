@@ -64,12 +64,23 @@ impl Display for DeltaHours {
                 "Missing {} hours, {} minutes, {} seconds.",
                 current_hours, current_minutes, current_seconds
             ),
-            HourState::Credit => &format!(
+            HourState::Credit if self.original_delta != 0 => &format!(
                 "Exceeding {} hours, {} minutes, {} seconds.",
                 current_hours, current_minutes, current_seconds
             ),
+            HourState::Credit => &"Empty registry.".to_string(),
         };
 
         write!(f, "{}", temp)
+    }
+}
+
+impl Default for DeltaHours {
+    fn default() -> Self {
+        Self {
+            original_delta: Default::default(),
+            unsigned_delta: Default::default(),
+            state: HourState::Credit,
+        }
     }
 }

@@ -3,7 +3,7 @@ use std::{
     io::{Read, Write},
 };
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -31,6 +31,10 @@ pub enum ClockedInServiceError {
     SerializationError,
     #[error("Error during opening of long term state file.")]
     LongTermRegistryOpenError,
+    #[error("ClockIn day in the last day of the last week of registry.")]
+    CurrentClockInDaySameAsLastWeekInRegistry,
+    #[error("ClockIn day in the last day of the current work week.")]
+    CurrentClockInDaySameAsCurrentWorkWeek,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -57,6 +61,28 @@ impl ClockedInService {
     }
 
     pub fn clock_in(&mut self, starting_time: DateTime<Utc>) -> Result<(), ClockedInServiceError> {
+        if let Some(last_clock_out) = self.long_term_registry.last_clock_out_last_week() {
+            let same_year = starting_time.year() == last_clock_out.year();
+            let same_month = starting_time.month() == last_clock_out.month();
+            let same_day = starting_time.day() == last_clock_out.day();
+
+            if same_year && same_month && same_day {
+                return Err(ClockedInServiceError::CurrentClockInDaySameAsLastWeekInRegistry);
+            }
+        }
+
+        if let Some(last_week) = &self.current_work_week {
+            if let Some(last_clock_out) = last_week.last_clock_out_last_day_in_week() {
+                let same_year = starting_time.year() == last_clock_out.year();
+                let same_month = starting_time.month() == last_clock_out.month();
+                let same_day = starting_time.day() == last_clock_out.day();
+
+                if same_year && same_month && same_day {
+                    return Err(ClockedInServiceError::CurrentClockInDaySameAsCurrentWorkWeek);
+                }
+            }
+        }
+
         match &self.current_work_journey {
             Some(current_work_journey) => Err(ClockedInServiceError::WorkJourneyAlreadyInProgess(
                 current_work_journey.starting_time,
@@ -97,7 +123,8 @@ impl ClockedInService {
         match &mut self.current_work_week {
             Some(current_work_week) => current_work_week.append_day(finished_work_day),
             None => {
-                let new_work_week = WorkWeek::new();
+                let mut new_work_week = WorkWeek::new();
+                new_work_week.append_day(finished_work_day);
                 self.current_work_week = Some(new_work_week);
             }
         }
@@ -118,6 +145,7 @@ impl ClockedInService {
             let new_work_week = WorkWeek::new();
             self.current_work_week = Some(new_work_week);
         }
+
         Ok(())
     }
 

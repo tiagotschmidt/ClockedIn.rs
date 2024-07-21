@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::num::TryFromIntError;
 use thiserror::Error;
@@ -32,12 +33,13 @@ impl LongTermRegistry {
     }
 
     pub fn worked_delta(&self) -> Result<DeltaHours, LongTermRegistryError> {
-        let mut current_delta = self
-            .history
-            .first()
-            .ok_or(LongTermRegistryError::EmptyHistory)?
-            .worked_delta()
-            .map_err(LongTermRegistryError::IntConversionError)?;
+        let mut current_delta = if let Some(work_week) = self.history.first() {
+            work_week
+                .worked_delta()
+                .map_err(LongTermRegistryError::IntConversionError)?
+        } else {
+            DeltaHours::default()
+        };
 
         for week in self.history.iter().skip(1) {
             current_delta += week
@@ -46,6 +48,12 @@ impl LongTermRegistry {
         }
 
         Ok(current_delta)
+    }
+
+    pub fn last_clock_out_last_week(&self) -> Option<DateTime<Utc>> {
+        self.history
+            .last()
+            .and_then(|item| item.last_clock_out_last_day_in_week())
     }
 }
 
