@@ -77,6 +77,7 @@ impl ClockedInService {
                     .map_err(ClockedInServiceError::WorkJourneyEndingError)?;
 
                 self.current_work_day.push(finished_journey);
+                self.current_work_journey = None;
 
                 Ok(())
             }
@@ -145,14 +146,17 @@ impl ClockedInService {
     }
 
     pub fn save_state(&self) -> Result<(), ClockedInServiceError> {
-        let mut file = open_long_term_registry_file()?;
+        let mut file = open_or_create_long_term_registry_file_to_write()?;
 
         let _ = file.write_all(self.serialize_to_json()?.as_bytes());
         Ok(())
     }
 
     pub fn read_state() -> Result<ClockedInService, ClockedInServiceError> {
-        let mut file = open_long_term_registry_file()?;
+        let mut file = match open_long_term_registry_file_to_read() {
+            Ok(file) => file,
+            Err(_err) => open_or_create_long_term_registry_file_to_write()?,
+        };
 
         let mut serialized_state = String::new();
         let _ = file.read_to_string(&mut serialized_state);
@@ -167,11 +171,20 @@ impl Default for ClockedInService {
     }
 }
 
-fn open_long_term_registry_file() -> Result<std::fs::File, ClockedInServiceError> {
+fn open_or_create_long_term_registry_file_to_write() -> Result<std::fs::File, ClockedInServiceError>
+{
     let file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
+        .open(LONG_TERM_REGISTRY_STATE_FILE_NAME)
+        .map_err(|_| ClockedInServiceError::LongTermRegistryOpenError)?;
+    Ok(file)
+}
+
+fn open_long_term_registry_file_to_read() -> Result<std::fs::File, ClockedInServiceError> {
+    let file = OpenOptions::new()
+        .read(true)
         .open(LONG_TERM_REGISTRY_STATE_FILE_NAME)
         .map_err(|_| ClockedInServiceError::LongTermRegistryOpenError)?;
     Ok(file)
