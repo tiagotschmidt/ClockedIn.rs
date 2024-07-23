@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::work_journey::WorkJourney;
 
 const MAX_JOURNEYS_PER_DAY: usize = 5;
+pub const MAX_HOURS_PER_JOURNEY: TimeDelta = TimeDelta::hours(6);
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum IntraDayViolation {
@@ -30,18 +31,22 @@ impl WorkDay {
 
         for (index, journey) in journeys.iter().enumerate() {
             let mut journey_reached_max = false;
-            if journey.worked_hours() == TimeDelta::hours(6) {
+            if journey.worked_hours() >= MAX_HOURS_PER_JOURNEY {
                 journey_reached_max = true;
             }
 
             if journey_reached_max {
                 if let Some(next_journey) = journeys.get(index + 1) {
-                    let inter_journey_rest =
-                        next_journey.get_starting_time() - journey.get_ending_time();
+                    if next_journey.worked_hours() >= MAX_HOURS_PER_JOURNEY
+                        || journey.worked_hours() >= MAX_HOURS_PER_JOURNEY
+                    {
+                        let inter_journey_rest =
+                            next_journey.get_starting_time() - journey.get_ending_time();
 
-                    if inter_journey_rest < TimeDelta::hours(1) {
-                        println!("Inter-journey rest was violated!");
-                        day_violations.push(IntraDayViolation::ViolatedInterJourneyRest);
+                        if inter_journey_rest < TimeDelta::hours(1) {
+                            println!("Inter-journey rest was violated!");
+                            day_violations.push(IntraDayViolation::ViolatedInterJourneyRest);
+                        }
                     }
                 }
             }

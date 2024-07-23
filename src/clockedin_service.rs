@@ -3,11 +3,14 @@ use std::{
     io::{Read, Write},
 };
 
-use chrono::{DateTime, Datelike, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 const LONG_TERM_REGISTRY_STATE_FILE_NAME: &str = "long_term_registry_state.json";
+const EXPECTED_WORK_JOURNEY_TIME_DELTA: TimeDelta = TimeDelta::hours(8);
+
+use crate::work_days::MAX_HOURS_PER_JOURNEY;
 
 use super::{
     delta_hours::DeltaHours,
@@ -163,6 +166,51 @@ impl ClockedInService {
         };
 
         Ok(long_time_registry_delta)
+    }
+
+    pub fn worked_hours_today(&self) -> TimeDelta {
+        self.current_work_day
+            .iter()
+            .fold(TimeDelta::zero(), |acc, item| acc + item.worked_hours())
+    }
+
+    pub fn worked_hours_this_week(&self) -> Vec<(NaiveDate, TimeDelta)> {
+        let mut return_vec = Vec::new();
+
+        if let Some(week) = &self.current_work_week {
+            for day in &week.workdays {
+                return_vec.push((
+                    day.first_clock_in().date_naive(),
+                    TimeDelta::seconds(day.worked_hours()),
+                ))
+            }
+        }
+
+        return_vec
+    }
+
+    pub fn recommended_journey(&self) -> Option<DateTime<Utc>> {
+        let worked_hours_today = self.worked_hours_today();
+        let remaining_hours = EXPECTED_WORK_JOURNEY_TIME_DELTA - worked_hours_today;
+
+        if remaining_hours < TimeDelta::zero() {
+            return None;
+        }
+
+        if let Some(current_journey) = &self.current_work_journey {
+            let preview_journey_end = if remaining_hours > MAX_HOURS_PER_JOURNEY {
+                let current_journey_start = current_journey.starting_time;
+                let preview_journey_end = current_journey_start + TimeDelta::hours(6);
+                Some(preview_journey_end)
+            } else {
+                let current_journey_start = current_journey.starting_time;
+                let preview_journey_end = current_journey_start + remaining_hours;
+                Some(preview_journey_end)
+            };
+            return preview_journey_end;
+        } else {
+            return None;
+        }
     }
 
     fn serialize_to_json(&self) -> Result<String, ClockedInServiceError> {

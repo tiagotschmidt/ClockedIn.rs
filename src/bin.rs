@@ -38,9 +38,12 @@ fn main() {
     if !args.is_empty() {
         let now_date = chrono::offset::Utc::now().date_naive();
         let command = args.first().expect("Impossible to happen.");
-        let time_string = args
-            .get(1)
-            .expect("Incorrect program usage. Program usage example: ./clockin in 10:35");
+        let time_string = if command != "view" {
+            args.get(1)
+                .expect("Incorrect program usage. Program usage example: ./clockin in 10:35")
+        } else {
+            "00:00"
+        };
         let clockin_time = NaiveTime::parse_from_str(time_string, "%H:%M")
             .expect("Error occurred during time parsing");
         let clockin_date_time: DateTime<Utc> =
@@ -79,11 +82,11 @@ fn main() {
         };
 
         println!("# ClockedIn #");
-        println!("Current Delta (until today): {}", current_delta);
+        display_general_information(&clockedin_service, current_delta);
     } else {
         loop {
             println!("# ClockedIn Terminal #");
-            println!("Current Delta (until today): {}", current_delta);
+            display_general_information(&clockedin_service, current_delta);
             println!("0. ClockIn");
             println!("1. ClockOut");
             println!("2. ClockOut and end Day");
@@ -132,6 +135,40 @@ fn main() {
     }
 
     epilogue(&clockedin_service);
+}
+
+fn display_general_information(
+    clockedin_service: &ClockedInService,
+    current_delta: clockedin_utils::delta_hours::DeltaHours,
+) {
+    println!("Current Delta (until today): {}", current_delta);
+    for item in clockedin_service.worked_hours_this_week() {
+        let (worked_hours_today, worked_minutes_today) = time_delta_into_hour_minute(&item.1);
+        println!(
+            "-> {} worked {}:{} hours.",
+            item.0, worked_hours_today, worked_minutes_today
+        );
+    }
+    let worked_hours_today_time_delta = &clockedin_service.worked_hours_today();
+    let (worked_hours_today, worked_minutes_today) =
+        time_delta_into_hour_minute(worked_hours_today_time_delta);
+    println!(
+        "Worked Today (finished journeys)): {}:{}",
+        worked_hours_today, worked_minutes_today
+    );
+    if let Some(recommendation) = clockedin_service.recommended_journey() {
+        println!(
+            "Recommended end time of current journey: {}",
+            recommendation
+        );
+    }
+}
+
+fn time_delta_into_hour_minute(worked_hours_today_time_delta: &chrono::TimeDelta) -> (i64, i64) {
+    let worked_hours_today = worked_hours_today_time_delta.num_hours();
+    let worked_minutes_today =
+        worked_hours_today_time_delta.num_minutes() - worked_hours_today * 60;
+    (worked_hours_today, worked_minutes_today)
 }
 
 fn panic_epilogue(clockedin_service: &ClockedInService, err: ClockedInServiceError) {

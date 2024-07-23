@@ -62,7 +62,7 @@ impl Display for DeltaHours {
             (self.unsigned_delta - current_hours * 60 * 60) - current_minutes * 60;
 
         let temp = match self.state {
-            HourState::Debt => &format!(
+            HourState::Debt => format!(
                 "{} {} {}, {} {}, {} {}",
                 "Missing".red(),
                 current_hours,
@@ -72,7 +72,7 @@ impl Display for DeltaHours {
                 current_seconds,
                 "seconds.".red(),
             ),
-            HourState::Credit if self.original_delta != 0 => &format!(
+            HourState::Credit if self.original_delta != 0 => format!(
                 "{} {} {}, {} {}, {} {}",
                 "Exceeding".green(),
                 current_hours,
@@ -82,7 +82,7 @@ impl Display for DeltaHours {
                 current_seconds,
                 "seconds.".green(),
             ),
-            HourState::Credit => &"Delta is zero".to_string(),
+            HourState::Credit => "Delta is zero".to_string(),
         };
 
         write!(f, "{}", temp)
