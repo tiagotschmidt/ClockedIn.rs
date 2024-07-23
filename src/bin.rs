@@ -2,6 +2,7 @@ use std::{env, io};
 
 use chrono::{DateTime, NaiveDateTime, NaiveTime, Utc};
 use clockedin_utils::clockedin_service::{ClockedInService, ClockedInServiceError};
+use colored::Colorize;
 
 #[repr(u8)]
 pub enum MainProgramOptions {
@@ -81,11 +82,9 @@ fn main() {
             }
         };
 
-        println!("# ClockedIn #");
         display_general_information(&clockedin_service, current_delta);
     } else {
         loop {
-            println!("# ClockedIn Terminal #");
             display_general_information(&clockedin_service, current_delta);
             println!("0. ClockIn");
             println!("1. ClockOut");
@@ -141,25 +140,58 @@ fn display_general_information(
     clockedin_service: &ClockedInService,
     current_delta: clockedin_utils::delta_hours::DeltaHours,
 ) {
+    println!("    ");
+    println!("");
+    println!("   ____ _            _            _ ___        ");
+    println!("  / ___| | ___   ___| | _____  __| |_ _|_ __   ");
+    println!(" | |   | |/ _ \\ / __| |/ / _ \\/ _` || || '_ \\  ");
+    println!(" | |___| | (_) | (__|   <  __/ (_| || || | | | ");
+    println!("  \\____|_|\\__/ \\___|_|\\_\\___|\\__,_|___|_| |_| ");
+    println!("                                               ");
+    println!("");
+    println!("");
     println!("Current Delta (until today): {}", current_delta);
+    println!("{}", "This week history:".bright_blue());
     for item in clockedin_service.worked_hours_this_week() {
         let (worked_hours_today, worked_minutes_today) = time_delta_into_hour_minute(&item.1);
         println!(
-            "-> {} worked {}:{} hours.",
-            item.0, worked_hours_today, worked_minutes_today
+            "{}{}{}{}{}{}{}",
+            " * ".bright_cyan(),
+            item.0.to_string().bright_blue(),
+            " -> worked ".bright_blue(),
+            worked_hours_today.to_string().bright_blue().bold(),
+            "h:".bright_blue(),
+            worked_minutes_today.to_string().bright_blue().bold(),
+            "m.".bright_blue()
         );
     }
     let worked_hours_today_time_delta = &clockedin_service.worked_hours_today();
     let (worked_hours_today, worked_minutes_today) =
         time_delta_into_hour_minute(worked_hours_today_time_delta);
     println!(
-        "Worked Today (finished journeys)): {}:{}",
-        worked_hours_today, worked_minutes_today
+        "{}{}{}{}{}",
+        "Worked Today (finished journeys): ".bright_blue().bold(),
+        worked_hours_today.to_string().bright_blue().bold(),
+        "h:".bright_blue().bold(),
+        worked_minutes_today.to_string().bright_blue().bold(),
+        "m.".bright_blue().bold()
     );
-    if let Some(recommendation) = clockedin_service.recommended_journey() {
+    if let Some((normal_recommendation, overtime_recommendation)) =
+        clockedin_service.recommended_journey()
+    {
         println!(
-            "Recommended end time of current journey: {}",
-            recommendation
+            "{} {}{}",
+            "Recommended normal ending of current journey:".green(),
+            normal_recommendation.to_string().green(),
+            ".".green()
+        );
+        println!(
+            "{} {}{}",
+            "Recommended overtime ending of current journey:"
+                .green()
+                .bold(),
+            overtime_recommendation.to_string().green().bold(),
+            ".".green().bold()
         );
     }
 }

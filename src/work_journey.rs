@@ -5,7 +5,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum WorkJourneyError {
     #[error("Invalid clock-in and clock-out time boundaries.")]
-    InvalidaClockBoundaries(DateTime<Utc>, DateTime<Utc>),
+    InvalidClockBoundaries(DateTime<Utc>, DateTime<Utc>),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -48,7 +48,7 @@ impl WorkJourney {
                 ending_time,
             })
         } else {
-            Err(WorkJourneyError::InvalidaClockBoundaries(
+            Err(WorkJourneyError::InvalidClockBoundaries(
                 starting_time,
                 ending_time,
             ))

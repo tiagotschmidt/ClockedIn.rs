@@ -9,6 +9,7 @@ use thiserror::Error;
 
 const LONG_TERM_REGISTRY_STATE_FILE_NAME: &str = "long_term_registry_state.json";
 const EXPECTED_WORK_JOURNEY_TIME_DELTA: TimeDelta = TimeDelta::hours(8);
+const EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA: TimeDelta = TimeDelta::hours(2);
 
 use crate::work_days::MAX_HOURS_PER_JOURNEY;
 
@@ -189,7 +190,7 @@ impl ClockedInService {
         return_vec
     }
 
-    pub fn recommended_journey(&self) -> Option<DateTime<Utc>> {
+    pub fn recommended_journey(&self) -> Option<(DateTime<Utc>, DateTime<Utc>)> {
         let worked_hours_today = self.worked_hours_today();
         let remaining_hours = EXPECTED_WORK_JOURNEY_TIME_DELTA - worked_hours_today;
 
@@ -201,11 +202,22 @@ impl ClockedInService {
             let preview_journey_end = if remaining_hours > MAX_HOURS_PER_JOURNEY {
                 let current_journey_start = current_journey.starting_time;
                 let preview_journey_end = current_journey_start + TimeDelta::hours(6);
-                Some(preview_journey_end)
+
+                Some((preview_journey_end, preview_journey_end))
             } else {
                 let current_journey_start = current_journey.starting_time;
                 let preview_journey_end = current_journey_start + remaining_hours;
-                Some(preview_journey_end)
+
+                if remaining_hours + EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA
+                    < MAX_HOURS_PER_JOURNEY
+                {
+                    Some((
+                        preview_journey_end,
+                        preview_journey_end + EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA,
+                    ))
+                } else {
+                    Some((preview_journey_end, preview_journey_end))
+                }
             };
             return preview_journey_end;
         } else {
