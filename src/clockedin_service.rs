@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 const LONG_TERM_REGISTRY_STATE_FILE_NAME: &str = "long_term_registry_state.json";
-const EXPECTED_WORK_JOURNEY_TIME_DELTA: TimeDelta = TimeDelta::hours(8);
-const EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA: TimeDelta = TimeDelta::hours(2);
+pub const EXPECTED_WORK_JOURNEY_TIME_DELTA: TimeDelta = TimeDelta::hours(8);
+pub const EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA: TimeDelta = TimeDelta::hours(2);
 
 use crate::work_days::MAX_HOURS_PER_JOURNEY;
 
@@ -190,39 +190,44 @@ impl ClockedInService {
         return_vec
     }
 
-    pub fn recommended_journey(&self) -> Option<(DateTime<Utc>, DateTime<Utc>)> {
+    pub fn recommended_journey(&self, expected_work_journey: TimeDelta) -> Option<DateTime<Utc>> {
         let worked_hours_today = self.worked_hours_today();
-        let remaining_hours = EXPECTED_WORK_JOURNEY_TIME_DELTA - worked_hours_today;
+        let remaining_hours = expected_work_journey - worked_hours_today;
 
         if remaining_hours < TimeDelta::zero() {
-            return None;
+            return Some(chrono::Utc::now());
         }
 
         if let Some(current_journey) = &self.current_work_journey {
-            let preview_journey_end = if remaining_hours > MAX_HOURS_PER_JOURNEY {
+            if remaining_hours > MAX_HOURS_PER_JOURNEY {
                 let current_journey_start = current_journey.starting_time;
                 let preview_journey_end = current_journey_start + TimeDelta::hours(6);
-
-                Some((preview_journey_end, preview_journey_end))
+                Some(preview_journey_end)
             } else {
                 let current_journey_start = current_journey.starting_time;
                 let preview_journey_end = current_journey_start + remaining_hours;
-
-                if remaining_hours + EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA
-                    < MAX_HOURS_PER_JOURNEY
-                {
-                    Some((
-                        preview_journey_end,
-                        preview_journey_end + EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA,
-                    ))
-                } else {
-                    Some((preview_journey_end, preview_journey_end))
-                }
-            };
-            return preview_journey_end;
+                Some(preview_journey_end)
+            }
         } else {
-            return None;
+            None
         }
+    }
+
+    pub fn has_finished_work_day(&self) -> bool {
+        if let Some(week) = self.current_work_week.iter().last() {
+            if let Some(day) = week.workdays.last() {
+                let now = chrono::Utc::now();
+
+                return now.date_naive() == day.last_clock_out().date_naive();
+            }
+        } else if let Some(week) = self.long_term_registry.history.last() {
+            if let Some(day) = week.workdays.last() {
+                let now = chrono::Utc::now();
+
+                return now.date_naive() == day.last_clock_out().date_naive();
+            }
+        }
+        false
     }
 
     fn serialize_to_json(&self) -> Result<String, ClockedInServiceError> {

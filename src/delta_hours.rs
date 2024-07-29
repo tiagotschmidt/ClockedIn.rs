@@ -34,6 +34,10 @@ impl DeltaHours {
             state,
         }
     }
+
+    pub fn is_zero(&self) -> bool {
+        self.unsigned_delta == 0
+    }
 }
 
 impl AddAssign for DeltaHours {
@@ -42,6 +46,8 @@ impl AddAssign for DeltaHours {
 
         if self.original_delta >= 0 {
             self.state = HourState::Debt;
+        } else {
+            self.state = HourState::Credit;
         }
 
         let unsigned_delta = if self.original_delta > 0 {

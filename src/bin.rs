@@ -1,7 +1,10 @@
 use std::{env, io};
 
-use chrono::{DateTime, NaiveDateTime, NaiveTime, Utc};
-use clockedin_utils::clockedin_service::{ClockedInService, ClockedInServiceError};
+use chrono::{DateTime, Datelike, NaiveDateTime, NaiveTime, TimeDelta, Utc};
+use clockedin_utils::clockedin_service::{
+    ClockedInService, ClockedInServiceError, EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA,
+    EXPECTED_WORK_JOURNEY_TIME_DELTA,
+};
 use colored::Colorize;
 
 #[repr(u8)]
@@ -141,23 +144,24 @@ fn display_general_information(
     current_delta: clockedin_utils::delta_hours::DeltaHours,
 ) {
     println!("    ");
-    println!("");
     println!("   ____ _            _            _ ___        ");
     println!("  / ___| | ___   ___| | _____  __| |_ _|_ __   ");
     println!(" | |   | |/ _ \\ / __| |/ / _ \\/ _` || || '_ \\  ");
     println!(" | |___| | (_) | (__|   <  __/ (_| || || | | | ");
     println!("  \\____|_|\\__/ \\___|_|\\_\\___|\\__,_|___|_| |_| ");
     println!("                                               ");
-    println!("");
-    println!("");
-    println!("Current Delta (until today): {}", current_delta);
+    if current_delta.is_zero() {
+        println!("Delta is currently 0 (zero).")
+    } else {
+        println!("Current Delta (until today): {}", current_delta);
+    }
     println!("{}", "This week history:".bright_blue());
     for item in clockedin_service.worked_hours_this_week() {
         let (worked_hours_today, worked_minutes_today) = time_delta_into_hour_minute(&item.1);
         println!(
             "{}{}{}{}{}{}{}",
             " * ".bright_cyan(),
-            item.0.to_string().bright_blue(),
+            item.0.weekday().to_string().bright_blue(),
             " -> worked ".bright_blue(),
             worked_hours_today.to_string().bright_blue().bold(),
             "h:".bright_blue(),
@@ -168,30 +172,45 @@ fn display_general_information(
     let worked_hours_today_time_delta = &clockedin_service.worked_hours_today();
     let (worked_hours_today, worked_minutes_today) =
         time_delta_into_hour_minute(worked_hours_today_time_delta);
-    println!(
-        "{}{}{}{}{}",
-        "Worked Today (finished journeys): ".bright_blue().bold(),
-        worked_hours_today.to_string().bright_blue().bold(),
-        "h:".bright_blue().bold(),
-        worked_minutes_today.to_string().bright_blue().bold(),
-        "m.".bright_blue().bold()
-    );
-    if let Some((normal_recommendation, overtime_recommendation)) =
-        clockedin_service.recommended_journey()
+    if !clockedin_service.has_finished_work_day() {
+        println!(
+            "{}{}{}{}{}",
+            "Worked Today (finished journeys): ".bright_blue().bold(),
+            worked_hours_today.to_string().bright_blue().bold(),
+            "h:".bright_blue().bold(),
+            worked_minutes_today.to_string().bright_blue().bold(),
+            "m.".bright_blue().bold()
+        );
+    } else {
+        println!("{}", "Finished work day".bright_blue().bold(),);
+    }
+    if let Some(normal_recommendation) = clockedin_service.recommended_journey(TimeDelta::hours(6))
     {
         println!(
             "{} {}{}",
-            "Recommended normal ending of current journey:".green(),
+            "Recommended ending of 6 hours day of work:".bright_red(),
+            normal_recommendation.to_string().bright_red(),
+            ".".green()
+        );
+    }
+    if let Some(normal_recommendation) =
+        clockedin_service.recommended_journey(EXPECTED_WORK_JOURNEY_TIME_DELTA)
+    {
+        println!(
+            "{} {}{}",
+            "Recommended ending of 8 hours day of work:".green(),
             normal_recommendation.to_string().green(),
             ".".green()
         );
+    }
+    if let Some(normal_recommendation) = clockedin_service.recommended_journey(
+        EXPECTED_WORK_JOURNEY_TIME_DELTA + EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA,
+    ) {
         println!(
             "{} {}{}",
-            "Recommended overtime ending of current journey:"
-                .green()
-                .bold(),
-            overtime_recommendation.to_string().green().bold(),
-            ".".green().bold()
+            "Recommended ending of 10 hours day of work:".purple(),
+            normal_recommendation.to_string().purple(),
+            ".".green()
         );
     }
 }
