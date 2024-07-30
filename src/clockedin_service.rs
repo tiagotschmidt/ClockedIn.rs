@@ -194,8 +194,8 @@ impl ClockedInService {
         let worked_hours_today = self.worked_hours_today();
         let remaining_hours = expected_work_journey - worked_hours_today;
 
-        if remaining_hours < TimeDelta::zero() {
-            return Some(chrono::Utc::now());
+        if remaining_hours < TimeDelta::zero() && self.current_work_journey.is_some() {
+            return Some(chrono::Utc::now() - chrono::TimeDelta::hours(3));
         }
 
         if let Some(current_journey) = &self.current_work_journey {
