@@ -42,7 +42,7 @@ impl WorkJourney {
         starting_time: DateTime<Utc>,
         ending_time: DateTime<Utc>,
     ) -> Result<WorkJourney, WorkJourneyError> {
-        if WorkJourney::validate(starting_time, ending_time) {
+        if WorkJourney::validate(&starting_time, &ending_time) {
             Ok(WorkJourney {
                 starting_time,
                 ending_time,
@@ -55,10 +55,6 @@ impl WorkJourney {
         }
     }
 
-    fn validate(starting_time: DateTime<Utc>, ending_time: DateTime<Utc>) -> bool {
-        ending_time >= starting_time
-    }
-
     pub fn worked_hours(&self) -> TimeDelta {
         self.ending_time - self.starting_time
     }
@@ -69,6 +65,10 @@ impl WorkJourney {
 
     pub fn get_ending_time(&self) -> DateTime<Utc> {
         self.ending_time
+    }
+
+    fn validate(starting_time: &DateTime<Utc>, ending_time: &DateTime<Utc>) -> bool {
+        ending_time >= starting_time
     }
 }
 

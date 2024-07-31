@@ -27,9 +27,9 @@ impl WorkWeek {
         }
     }
 
-    pub fn append_day(&mut self, day: WorkDay) {
+    pub fn append_day(&mut self, day: &WorkDay) {
         if self.workdays.len() < 5 {
-            self.workdays.push(day)
+            self.workdays.push(day.clone())
         }
 
         for (index, day) in self.workdays.iter().enumerate() {
@@ -52,15 +52,6 @@ impl WorkWeek {
         })
     }
 
-    fn days_worked(&self) -> usize {
-        self.workdays.len()
-    }
-
-    fn expected_hours(&self) -> Result<i64, TryFromIntError> {
-        let hours = (self.days_worked() * 8).try_into()?;
-        Ok(TimeDelta::hours(hours).num_seconds())
-    }
-
     pub fn worked_delta(&self) -> Result<DeltaHours, TryFromIntError> {
         let current_delta_time = self.expected_hours()? - self.worked_hours();
         Ok(DeltaHours::new(current_delta_time))
@@ -68,6 +59,15 @@ impl WorkWeek {
 
     pub fn last_clock_out_last_day_in_week(&self) -> Option<DateTime<Utc>> {
         self.workdays.last().map(|item| item.last_clock_out())
+    }
+
+    fn days_worked(&self) -> usize {
+        self.workdays.len()
+    }
+
+    fn expected_hours(&self) -> Result<i64, TryFromIntError> {
+        let hours = (self.days_worked() * 8).try_into()?;
+        Ok(TimeDelta::hours(hours).num_seconds())
     }
 }
 
@@ -78,10 +78,10 @@ impl Default for WorkWeek {
 }
 
 #[cfg(test)]
-mod tests {
-    use chrono::{TimeDelta, Utc};
+pub mod tests {
+    use chrono::TimeDelta;
 
-    use crate::{work_days::WorkDay, work_journey::IncompleteWorkJourney};
+    use crate::{delta_hours::DeltaHours, work_days::tests::initialize_mock_day};
 
     use super::WorkWeek;
 
@@ -93,13 +93,20 @@ mod tests {
     #[test]
     fn basic_work_week_math() {
         let mock_week = intialize_mock_week();
+        let (_now, _now_plus_eightt, work_day_five) = initialize_mock_day();
 
         assert_eq!(
             TimeDelta::hours(5 * 7).num_seconds(),
             mock_week.worked_hours()
         );
-        assert_eq!(5 * 8 * 60 * 60, mock_week.expected_hours().unwrap());
-        assert_eq!(5, mock_week.days_worked());
+        assert!(
+            work_day_five.last_clock_out() - mock_week.last_clock_out_last_day_in_week().unwrap()
+                < TimeDelta::seconds(1)
+        );
+        assert_eq!(
+            DeltaHours::new(TimeDelta::hours(5).num_seconds()),
+            mock_week.worked_delta().unwrap()
+        )
     }
 
     #[test]
@@ -109,7 +116,7 @@ mod tests {
         assert!(mock_week.violations.is_some());
     }
 
-    fn intialize_mock_week() -> WorkWeek {
+    pub fn intialize_mock_week() -> WorkWeek {
         let (_now, _now_plus_eightt, work_day_one) = initialize_mock_day();
         let (_now, _now_plus_eightt, work_day_two) = initialize_mock_day();
         let (_now, _now_plus_eightt, work_day_three) = initialize_mock_day();
@@ -117,27 +124,11 @@ mod tests {
         let (_now, _now_plus_eightt, work_day_five) = initialize_mock_day();
 
         let mut _new_work_week = WorkWeek::new();
-        _new_work_week.append_day(work_day_one);
-        _new_work_week.append_day(work_day_two);
-        _new_work_week.append_day(work_day_three);
-        _new_work_week.append_day(work_day_four);
-        _new_work_week.append_day(work_day_five);
+        _new_work_week.append_day(&work_day_one);
+        _new_work_week.append_day(&work_day_two);
+        _new_work_week.append_day(&work_day_three);
+        _new_work_week.append_day(&work_day_four);
+        _new_work_week.append_day(&work_day_five);
         _new_work_week
-    }
-
-    fn initialize_mock_day() -> (chrono::DateTime<Utc>, chrono::DateTime<Utc>, WorkDay) {
-        let now = Utc::now();
-        let now_plus_six = now + TimeDelta::hours(6);
-        let now_plus_seven = now_plus_six + TimeDelta::hours(1);
-        let now_plus_eight = now_plus_seven + TimeDelta::hours(1);
-
-        let mut new_journey = IncompleteWorkJourney::new(now);
-        let mut new_journey_2 = IncompleteWorkJourney::new(now_plus_seven);
-        let journey = new_journey.end(now_plus_six).unwrap();
-        let journey2 = new_journey_2.end(now_plus_eight).unwrap();
-
-        let journeys = vec![journey, journey2];
-        let work_day = WorkDay::new(&journeys);
-        (now, now_plus_eight, work_day)
     }
 }

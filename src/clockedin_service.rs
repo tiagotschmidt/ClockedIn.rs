@@ -36,9 +36,9 @@ pub enum ClockedInServiceError {
     #[error("Error during opening of long term state file.")]
     LongTermRegistryOpenError,
     #[error("ClockIn day in the last day of the last week of registry.")]
-    CurrentClockInDaySameAsLastWeekInRegistry,
+    ClockInDaySameAsFinishedWeekInRegistry,
     #[error("ClockIn day in the last day of the current work week.")]
-    CurrentClockInDaySameAsCurrentWorkWeek,
+    ClockInDaySameAsLastFinishedWorkDay,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -66,31 +66,25 @@ impl ClockedInService {
 
     pub fn clock_in(&mut self, starting_time: DateTime<Utc>) -> Result<(), ClockedInServiceError> {
         if let Some(last_clock_out) = self.long_term_registry.last_clock_out_last_week() {
-            let same_year = starting_time.year() == last_clock_out.year();
-            let same_month = starting_time.month() == last_clock_out.month();
-            let same_day = starting_time.day() == last_clock_out.day();
-
-            if same_year && same_month && same_day {
-                return Err(ClockedInServiceError::CurrentClockInDaySameAsLastWeekInRegistry);
+            if same_work_day(starting_time, last_clock_out) {
+                return Err(ClockedInServiceError::ClockInDaySameAsFinishedWeekInRegistry);
             }
         }
 
         if let Some(last_week) = &self.current_work_week {
             if let Some(last_clock_out) = last_week.last_clock_out_last_day_in_week() {
-                let same_year = starting_time.year() == last_clock_out.year();
-                let same_month = starting_time.month() == last_clock_out.month();
-                let same_day = starting_time.day() == last_clock_out.day();
-
-                if same_year && same_month && same_day {
-                    return Err(ClockedInServiceError::CurrentClockInDaySameAsCurrentWorkWeek);
+                if same_work_day(starting_time, last_clock_out) {
+                    return Err(ClockedInServiceError::ClockInDaySameAsLastFinishedWorkDay);
                 }
             }
         }
 
         match &self.current_work_journey {
-            Some(current_work_journey) => Err(ClockedInServiceError::WorkJourneyAlreadyInProgess(
-                current_work_journey.starting_time,
-            )),
+            Some(initiated_work_journey) => {
+                Err(ClockedInServiceError::WorkJourneyAlreadyInProgess(
+                    initiated_work_journey.starting_time,
+                ))
+            }
             None => {
                 let new_work_journey = IncompleteWorkJourney::new(starting_time);
                 self.current_work_journey = Some(new_work_journey);
@@ -125,10 +119,10 @@ impl ClockedInService {
         self.current_work_day = Vec::new();
 
         match &mut self.current_work_week {
-            Some(current_work_week) => current_work_week.append_day(finished_work_day),
+            Some(current_work_week) => current_work_week.append_day(&finished_work_day),
             None => {
                 let mut new_work_week = WorkWeek::new();
-                new_work_week.append_day(finished_work_day);
+                new_work_week.append_day(&finished_work_day);
                 self.current_work_week = Some(new_work_week);
             }
         }
@@ -190,23 +184,26 @@ impl ClockedInService {
         return_vec
     }
 
-    pub fn recommended_journey(&self, expected_work_journey: TimeDelta) -> Option<DateTime<Utc>> {
+    pub fn recommended_journey(
+        &self,
+        expected_work_journey: TimeDelta,
+    ) -> Option<(DateTime<Utc>, bool)> {
         let worked_hours_today = self.worked_hours_today();
         let remaining_hours = expected_work_journey - worked_hours_today;
 
         if remaining_hours < TimeDelta::zero() && self.current_work_journey.is_some() {
-            return Some(chrono::Utc::now() - chrono::TimeDelta::hours(3));
+            return Some((chrono::Utc::now() - chrono::TimeDelta::hours(3), false));
         }
 
         if let Some(current_journey) = &self.current_work_journey {
             if remaining_hours > MAX_HOURS_PER_JOURNEY {
                 let current_journey_start = current_journey.starting_time;
                 let preview_journey_end = current_journey_start + TimeDelta::hours(6);
-                Some(preview_journey_end)
+                Some((preview_journey_end, true))
             } else {
                 let current_journey_start = current_journey.starting_time;
                 let preview_journey_end = current_journey_start + remaining_hours;
-                Some(preview_journey_end)
+                Some((preview_journey_end, false))
             }
         } else {
             None
@@ -256,6 +253,12 @@ impl ClockedInService {
 
         ClockedInService::deserialize_from_json(serialized_state)
     }
+}
+
+fn same_work_day(starting_time: DateTime<Utc>, last_clock_out: DateTime<Utc>) -> bool {
+    (starting_time.year() == last_clock_out.year())
+        && (starting_time.month() == last_clock_out.month())
+        && (starting_time.day() == last_clock_out.day())
 }
 
 impl Default for ClockedInService {

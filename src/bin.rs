@@ -148,7 +148,7 @@ fn display_general_information(
     println!("  / ___| | ___   ___| | _____  __| |_ _|_ __   ");
     println!(" | |   | |/ _ \\ / __| |/ / _ \\/ _` || || '_ \\  ");
     println!(" | |___| | (_) | (__|   <  __/ (_| || || | | | ");
-    println!("  \\____|_|\\__/ \\___|_|\\_\\___|\\__,_|___|_| |_| ");
+    println!("  \\____|_|\\__ / \\___|_|\\_\\___|\\__,_|___|_| |_| ");
     println!("                                               ");
     if current_delta.is_zero() {
         println!("Delta is currently 0 (zero).")
@@ -184,34 +184,52 @@ fn display_general_information(
     } else {
         println!("{}", "Finished work day".bright_blue().bold(),);
     }
-    if let Some(normal_recommendation) = clockedin_service.recommended_journey(TimeDelta::hours(6))
+    if let Some((normal_recommendation, another_journey_is_needed)) =
+        clockedin_service.recommended_journey(TimeDelta::hours(6))
     {
-        println!(
+        print!(
             "{} {}{}",
-            "Recommended ending of 6 hours day of work:".bright_red(),
-            normal_recommendation.to_string().bright_red(),
-            ".".green()
+            "Recommended ending of 6 hours day of work:".bright_blue(),
+            normal_recommendation.to_string().bright_blue().bold(),
+            ".".bright_blue()
         );
+        if another_journey_is_needed {
+            println!("{}", " Another work journey is needed.".bright_red().bold())
+        } else {
+            println!()
+        }
     }
-    if let Some(normal_recommendation) =
+    if let Some((normal_recommendation, another_journey_is_needed)) =
         clockedin_service.recommended_journey(EXPECTED_WORK_JOURNEY_TIME_DELTA)
     {
-        println!(
+        print!(
             "{} {}{}",
-            "Recommended ending of 8 hours day of work:".green(),
-            normal_recommendation.to_string().green(),
-            ".".green()
+            "Recommended ending of 8 hours day of work:".bright_blue(),
+            normal_recommendation.to_string().green().bold(),
+            ".".bright_blue()
         );
+        if another_journey_is_needed {
+            println!("{}", " Another work journey is needed.".bright_red().bold())
+        } else {
+            println!()
+        }
     }
-    if let Some(normal_recommendation) = clockedin_service.recommended_journey(
-        EXPECTED_WORK_JOURNEY_TIME_DELTA + EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA,
-    ) {
-        println!(
+    if let Some((normal_recommendation, another_journey_is_needed)) = clockedin_service
+        .recommended_journey(
+            EXPECTED_WORK_JOURNEY_TIME_DELTA + EXPECTED_OVERTIME_WORK_JOURNEY_TIME_DELTA,
+        )
+    {
+        print!(
             "{} {}{}",
-            "Recommended ending of 10 hours day of work:".purple(),
-            normal_recommendation.to_string().purple(),
+            "Recommended ending of 10 hours day of work:".bright_blue(),
+            normal_recommendation.to_string().red().bold(),
             ".".green()
         );
+        if another_journey_is_needed {
+            println!("{}", " Another work journey is needed.".bright_red().bold())
+        } else {
+            println!()
+        }
     }
 }
 

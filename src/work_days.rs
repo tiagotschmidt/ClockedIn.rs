@@ -95,7 +95,7 @@ impl WorkDay {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use chrono::{TimeDelta, Utc};
 
     use crate::{work_days::WorkDay, work_journey::IncompleteWorkJourney};
@@ -158,7 +158,7 @@ mod tests {
         assert_eq!(TimeDelta::hours(11).num_seconds(), work_day.worked_hours());
     }
 
-    fn initialize_mock_day() -> (chrono::DateTime<Utc>, chrono::DateTime<Utc>, WorkDay) {
+    pub fn initialize_mock_day() -> (chrono::DateTime<Utc>, chrono::DateTime<Utc>, WorkDay) {
         let now = Utc::now();
         let now_plus_six = now + TimeDelta::hours(6);
         let now_plus_seven = now_plus_six + TimeDelta::hours(1);

@@ -2,13 +2,13 @@ use std::{fmt::Display, ops::AddAssign};
 
 use colored::Colorize;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum HourState {
     Debt,
     Credit,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct DeltaHours {
     original_delta: i64,
     unsigned_delta: i64,

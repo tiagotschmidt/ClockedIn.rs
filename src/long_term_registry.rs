@@ -62,3 +62,51 @@ impl Default for LongTermRegistry {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use chrono::TimeDelta;
+
+    use crate::{delta_hours::DeltaHours, work_week::tests::intialize_mock_week};
+
+    use super::LongTermRegistry;
+
+    #[test]
+    fn basic_long_term_registry_initialization() {
+        let _mock_long_term_registry = initialize_mock_long_term_registry();
+    }
+
+    #[test]
+    fn basic_work_week_math() {
+        let _mock_long_term_registry = initialize_mock_long_term_registry();
+        let week4 = intialize_mock_week();
+
+        assert_eq!(
+            TimeDelta::hours(4 * 5 * 7).num_seconds(),
+            _mock_long_term_registry.worked_hours()
+        );
+        assert!(
+            week4.last_clock_out_last_day_in_week().unwrap()
+                - _mock_long_term_registry.last_clock_out_last_week().unwrap()
+                < TimeDelta::seconds(1)
+        );
+        assert_eq!(
+            DeltaHours::new(TimeDelta::hours(20).num_seconds()),
+            _mock_long_term_registry.worked_delta().unwrap()
+        )
+    }
+
+    fn initialize_mock_long_term_registry() -> LongTermRegistry {
+        let mut long_term_registry = LongTermRegistry::new();
+        let week1 = intialize_mock_week();
+        let week2 = intialize_mock_week();
+        let week3 = intialize_mock_week();
+        let week4 = intialize_mock_week();
+
+        long_term_registry.history.push(week1);
+        long_term_registry.history.push(week2);
+        long_term_registry.history.push(week3);
+        long_term_registry.history.push(week4);
+        long_term_registry
+    }
+}
