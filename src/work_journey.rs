@@ -1,4 +1,4 @@
-use chrono::{serde::ts_seconds, serde::ts_seconds_option, DateTime, TimeDelta, Utc};
+use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -10,23 +10,17 @@ pub enum WorkJourneyError {
 
 #[derive(Serialize, Deserialize)]
 pub struct IncompleteWorkJourney {
-    #[serde(with = "ts_seconds")]
     pub starting_time: DateTime<Utc>,
-    #[serde(with = "ts_seconds_option")]
-    ending_time: Option<DateTime<Utc>>,
 }
 
 impl IncompleteWorkJourney {
     pub fn new(current_time: DateTime<Utc>) -> IncompleteWorkJourney {
         IncompleteWorkJourney {
             starting_time: current_time,
-            ending_time: None,
         }
     }
 
     pub fn end(&mut self, current_time: DateTime<Utc>) -> Result<WorkJourney, WorkJourneyError> {
-        self.ending_time = Some(current_time);
-
         WorkJourney::new(self.starting_time, current_time)
     }
 }

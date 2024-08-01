@@ -1,4 +1,5 @@
 use chrono::{DateTime, TimeDelta, Utc};
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
 use crate::work_journey::WorkJourney;
@@ -29,39 +30,48 @@ impl WorkDay {
             .fold(TimeDelta::zero(), |acc, item| acc + item.worked_hours())
             .num_seconds();
 
-        for (index, journey) in journeys.iter().enumerate() {
-            let mut journey_reached_max = false;
-            if journey.worked_hours() >= MAX_HOURS_PER_JOURNEY {
-                journey_reached_max = true;
-            }
-
-            if journey_reached_max {
+        if worked_hours >= TimeDelta::hours(6).num_seconds() {
+            for (index, journey) in journeys.iter().enumerate() {
                 if let Some(next_journey) = journeys.get(index + 1) {
-                    if next_journey.worked_hours() >= MAX_HOURS_PER_JOURNEY
-                        || journey.worked_hours() >= MAX_HOURS_PER_JOURNEY
-                    {
-                        let inter_journey_rest =
-                            next_journey.get_starting_time() - journey.get_ending_time();
+                    let inter_journey_rest =
+                        next_journey.get_starting_time() - journey.get_ending_time();
 
-                        if inter_journey_rest < TimeDelta::hours(1) {
-                            println!("Inter-journey rest was violated!");
-                            day_violations.push(IntraDayViolation::ViolatedInterJourneyRest);
-                        }
+                    if inter_journey_rest < TimeDelta::hours(1) {
+                        println!(
+                            "{}",
+                            "Inter-journey rest was violated!"
+                                .red()
+                                .on_bright_white()
+                                .bold()
+                        );
+                        day_violations.push(IntraDayViolation::ViolatedInterJourneyRest);
                     }
                 }
             }
         }
 
         if worked_hours < TimeDelta::hours(6).num_seconds() {
-            println!("Worked less than 6 hours.");
+            println!(
+                "{}",
+                "Worked less than 6 hours.".red().on_bright_white().bold()
+            );
             day_violations.push(IntraDayViolation::MissingHours);
         } else if worked_hours > TimeDelta::hours(10).num_seconds() {
-            println!("Worked more than 10 hours.");
+            println!(
+                "{}",
+                "Worked more than 10 hours.".red().on_bright_white().bold()
+            );
             day_violations.push(IntraDayViolation::ExceddedMaxHours);
         }
 
         if journeys.len() > MAX_JOURNEYS_PER_DAY {
-            println!("Worked more than 5 journeys.")
+            println!(
+                "{}",
+                "Worked more than 5 journeys."
+                    .red()
+                    .on_bright_white()
+                    .bold()
+            );
         }
 
         WorkDay {

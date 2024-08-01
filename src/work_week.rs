@@ -1,6 +1,7 @@
 use std::num::TryFromIntError;
 
 use chrono::{DateTime, TimeDelta, Utc};
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
 use crate::{delta_hours::DeltaHours, work_days::WorkDay};
@@ -38,7 +39,13 @@ impl WorkWeek {
                 let this_day_first_clock_in = day.last_clock_out();
 
                 if next_day_first_clock_in - this_day_first_clock_in < TimeDelta::hours(11) {
-                    println!("Inter-day rest was violated!");
+                    println!(
+                        "{}",
+                        "Inter-day rest was violated!"
+                            .red()
+                            .on_bright_white()
+                            .bold()
+                    );
                     self.violations = Some(InterDayViolation::InterDayRestViolation);
                 }
             }
