@@ -4,6 +4,7 @@ use std::{
 };
 
 use chrono::{DateTime, Datelike, NaiveDate, TimeDelta, Utc};
+use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -225,6 +226,49 @@ impl ClockedInService {
             }
         }
         false
+    }
+
+    pub fn display_last_violations(&self) {
+        if let Some(work_week) = &self.current_work_week {
+            if let Some(last_day) = work_week.workdays.last() {
+                for violation in last_day.get_violations() {
+                    match violation {
+                        crate::work_days::IntraDayViolation::ExceddedMaxHours => println!(
+                            "{}",
+                            "Worked more than 10 hours.".red().on_bright_white().bold()
+                        ),
+                        crate::work_days::IntraDayViolation::MissingHours => println!(
+                            "{}",
+                            "Worked less than 6 hours.".red().on_bright_white().bold()
+                        ),
+                        crate::work_days::IntraDayViolation::ViolatedInterJourneyRest => println!(
+                            "{}",
+                            "Inter-journey rest was violated!"
+                                .red()
+                                .on_bright_white()
+                                .bold()
+                        ),
+                        crate::work_days::IntraDayViolation::ExceddedMaxJourneys => println!(
+                            "{}",
+                            "Worked more than 5 journeys."
+                                .red()
+                                .on_bright_white()
+                                .bold()
+                        ),
+                    }
+                }
+            }
+
+            if let Some(_violation) = work_week.get_violation() {
+                println!(
+                    "{}",
+                    "Inter-day rest was violated!"
+                        .red()
+                        .on_bright_white()
+                        .bold()
+                );
+            }
+        }
     }
 
     fn serialize_to_json(&self) -> Result<String, ClockedInServiceError> {

@@ -1,5 +1,4 @@
 use chrono::{DateTime, TimeDelta, Utc};
-use colored::Colorize;
 use serde::{Deserialize, Serialize};
 
 use crate::work_journey::WorkJourney;
@@ -12,6 +11,7 @@ pub enum IntraDayViolation {
     ExceddedMaxHours,
     MissingHours,
     ViolatedInterJourneyRest,
+    ExceddedMaxJourneys,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -31,47 +31,31 @@ impl WorkDay {
             .num_seconds();
 
         if worked_hours >= TimeDelta::hours(6).num_seconds() {
+            let mut has_found_a_sufficient_rest = false;
             for (index, journey) in journeys.iter().enumerate() {
                 if let Some(next_journey) = journeys.get(index + 1) {
                     let inter_journey_rest =
                         next_journey.get_starting_time() - journey.get_ending_time();
 
-                    if inter_journey_rest < TimeDelta::hours(1) {
-                        println!(
-                            "{}",
-                            "Inter-journey rest was violated!"
-                                .red()
-                                .on_bright_white()
-                                .bold()
-                        );
+                    if inter_journey_rest >= TimeDelta::hours(1) {
+                        has_found_a_sufficient_rest = true;
                         day_violations.push(IntraDayViolation::ViolatedInterJourneyRest);
                     }
                 }
             }
+            if !has_found_a_sufficient_rest {
+                day_violations.push(IntraDayViolation::ViolatedInterJourneyRest);
+            }
         }
 
         if worked_hours < TimeDelta::hours(6).num_seconds() {
-            println!(
-                "{}",
-                "Worked less than 6 hours.".red().on_bright_white().bold()
-            );
             day_violations.push(IntraDayViolation::MissingHours);
         } else if worked_hours > TimeDelta::hours(10).num_seconds() {
-            println!(
-                "{}",
-                "Worked more than 10 hours.".red().on_bright_white().bold()
-            );
             day_violations.push(IntraDayViolation::ExceddedMaxHours);
         }
 
         if journeys.len() > MAX_JOURNEYS_PER_DAY {
-            println!(
-                "{}",
-                "Worked more than 5 journeys."
-                    .red()
-                    .on_bright_white()
-                    .bold()
-            );
+            day_violations.push(IntraDayViolation::ExceddedMaxJourneys);
         }
 
         WorkDay {
@@ -101,6 +85,10 @@ impl WorkDay {
                 "Day generated without journey. There must be at least one journey in each day!",
             )
             .get_ending_time()
+    }
+
+    pub fn get_violations(&self) -> Vec<IntraDayViolation> {
+        self.violations.clone()
     }
 }
 

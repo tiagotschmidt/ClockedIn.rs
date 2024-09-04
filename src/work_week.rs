@@ -14,7 +14,7 @@ pub enum InterDayViolation {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct WorkWeek {
     pub workdays: Vec<WorkDay>,
-    violations: Option<InterDayViolation>,
+    violation: Option<InterDayViolation>,
 }
 
 impl WorkWeek {
@@ -24,7 +24,7 @@ impl WorkWeek {
 
         WorkWeek {
             workdays,
-            violations,
+            violation: violations,
         }
     }
 
@@ -46,7 +46,7 @@ impl WorkWeek {
                             .on_bright_white()
                             .bold()
                     );
-                    self.violations = Some(InterDayViolation::InterDayRestViolation);
+                    self.violation = Some(InterDayViolation::InterDayRestViolation);
                 }
             }
         }
@@ -66,6 +66,10 @@ impl WorkWeek {
 
     pub fn last_clock_out_last_day_in_week(&self) -> Option<DateTime<Utc>> {
         self.workdays.last().map(|item| item.last_clock_out())
+    }
+
+    pub fn get_violation(&self) -> Option<InterDayViolation> {
+        self.violation
     }
 
     fn days_worked(&self) -> usize {
@@ -120,7 +124,7 @@ pub mod tests {
     fn missing_hours_violation_check() {
         let mock_week = intialize_mock_week();
 
-        assert!(mock_week.violations.is_some());
+        assert!(mock_week.violation.is_some());
     }
 
     pub fn intialize_mock_week() -> WorkWeek {
