@@ -39,7 +39,6 @@ impl WorkDay {
 
                     if inter_journey_rest >= TimeDelta::hours(1) {
                         has_found_a_sufficient_rest = true;
-                        day_violations.push(IntraDayViolation::ViolatedInterJourneyRest);
                     }
                 }
             }

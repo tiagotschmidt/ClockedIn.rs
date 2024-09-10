@@ -235,22 +235,22 @@ impl ClockedInService {
                     match violation {
                         crate::work_days::IntraDayViolation::ExceddedMaxHours => println!(
                             "{}",
-                            "Worked more than 10 hours.".red().on_bright_white().bold()
+                            "Last WorkDay in Current WorkWeek -> Worked more than 10 hours.".red().on_bright_white().bold()
                         ),
                         crate::work_days::IntraDayViolation::MissingHours => println!(
                             "{}",
-                            "Worked less than 6 hours.".red().on_bright_white().bold()
+                            "Last WorkDay in Current WorkWeek -> Worked less than 6 hours.".red().on_bright_white().bold()
                         ),
                         crate::work_days::IntraDayViolation::ViolatedInterJourneyRest => println!(
                             "{}",
-                            "Inter-journey rest was violated!"
+                            "Last WorkDay in Current WorkWeek -> Inter-journey rest was violated!"
                                 .red()
                                 .on_bright_white()
                                 .bold()
                         ),
                         crate::work_days::IntraDayViolation::ExceddedMaxJourneys => println!(
                             "{}",
-                            "Worked more than 5 journeys."
+                            "Last WorkDay in Current WorkWeek -> Worked more than 5 journeys."
                                 .red()
                                 .on_bright_white()
                                 .bold()
@@ -262,7 +262,46 @@ impl ClockedInService {
             if let Some(_violation) = work_week.get_violation() {
                 println!(
                     "{}",
-                    "Inter-day rest was violated!"
+                    "Current WorkWeek -> Inter-day rest was violated!"
+                        .red()
+                        .on_bright_white()
+                        .bold()
+                );
+            }
+        }else if let Some(work_week) = &self.long_term_registry.history.last() {
+            if let Some(last_day) = work_week.workdays.last() {
+                for violation in last_day.get_violations() {
+                    match violation {
+                        crate::work_days::IntraDayViolation::ExceddedMaxHours => println!(
+                            "{}",
+                            "Last WorkDay in Last WorkWeek -> Worked more than 10 hours.".red().on_bright_white().bold()
+                        ),
+                        crate::work_days::IntraDayViolation::MissingHours => println!(
+                            "{}",
+                            "Last WorkDay in Last WorkWeek -> Worked less than 6 hours.".red().on_bright_white().bold()
+                        ),
+                        crate::work_days::IntraDayViolation::ViolatedInterJourneyRest => println!(
+                            "{}",
+                            "Last WorkDay in Last WorkWeek -> Inter-journey rest was violated!"
+                                .red()
+                                .on_bright_white()
+                                .bold()
+                        ),
+                        crate::work_days::IntraDayViolation::ExceddedMaxJourneys => println!(
+                            "{}",
+                            "Last WorkDay in Last WorkWeek -> Worked more than 5 journeys."
+                                .red()
+                                .on_bright_white()
+                                .bold()
+                        ),
+                    }
+                }
+            }
+
+            if let Some(_violation) = work_week.get_violation() {
+                println!(
+                    "{}",
+                    "Last WorkWeek -> Inter-day rest was violated!"
                         .red()
                         .on_bright_white()
                         .bold()

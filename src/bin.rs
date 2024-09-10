@@ -231,7 +231,7 @@ fn display_general_information(
             println!()
         }
     }
-    clockedin_service.display_last_violations()
+    clockedin_service.display_last_violations();
 }
 
 fn time_delta_into_hour_minute(worked_hours_today_time_delta: &chrono::TimeDelta) -> (i64, i64) {
