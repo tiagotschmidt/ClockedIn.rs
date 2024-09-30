@@ -30,7 +30,7 @@ impl WorkDay {
             .fold(TimeDelta::zero(), |acc, item| acc + item.worked_hours())
             .num_seconds();
 
-        if worked_hours >= TimeDelta::hours(6).num_seconds() {
+        if worked_hours > TimeDelta::hours(6).num_seconds() {
             let mut has_found_a_sufficient_rest = false;
             for (index, journey) in journeys.iter().enumerate() {
                 if let Some(next_journey) = journeys.get(index + 1) {
